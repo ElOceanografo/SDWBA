@@ -2,6 +2,8 @@
 ## functions based on McGeehee et al. 1998
 norm <- function(x) sqrt(sum(x^2))
 dot <- function(x, y) sum(x * y)
+rad2deg <- function(x) x * 180 / pi
+deg2rad <- function(x) x * pi / 180
 
 integrate.mc <- function(fun, lower, upper, ..., n=4000) {
   span <- upper - lower
@@ -57,9 +59,20 @@ backscatter.form <- function(x, y, z, a, g, h, k) {
   return(fbs)
 }
 
-k <- c(0, 2 * pi * 120e3, 0)
+k.magnitude <- 2 * pi * 120e3 / 1480
+tilt <- 45 * pi / 180
+k <- k.magnitude * c(cos(tilt), sin(tilt), 0)
 krill.shape <- read.csv("generic_krill.csv")
 krill.shape[c('x', 'y', 'z', 'a')] <- krill.shape[c('x', 'y', 'z', 'a')] * 0.001
 
 f.bs <- with(krill.shape, backscatter.form(x, y, z, a, g, h, k))
 10 * log10(abs(f.bs)^2)
+
+theta <- 0:360
+TS <- rep(0, length(theta))
+for (i in 1:length(theta)) {
+  k <- k.magnitude * c(cos(deg2rad(theta[i])), sin(deg2rad(theta[i])), 0)
+  fbs <- with(krill.shape, backscatter.form(x, y, z, a, g, h, k))
+  TS[i] <- 10 * log10(abs(fbs)^2)
+}
+plot(theta, TS, ty='l')
