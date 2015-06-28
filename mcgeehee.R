@@ -5,17 +5,6 @@ dot <- function(x, y) sum(x * y)
 rad2deg <- function(x) x * 180 / pi
 deg2rad <- function(x) x * pi / 180
 
-integrate.mc <- function(fun, lower, upper, ..., n=4000) {
-  span <- upper - lower
-  total <- 1e-16
-  total1 <- total
-  delta <- 1e16
-  for (i in 1:n) {
-    x <- runif(1, lower, upper)
-    total <- total + fun(x, args)
-  }
-  return(total / (n * span))
-}
 
 DWBAintegrand <- function(s, args) {
   rx <- s * (args$r2[1] - args$r1[1]) + args$r1[1]
@@ -26,7 +15,7 @@ DWBAintegrand <- function(s, args) {
   h <- s * (args$h2 - args$h1) + args$h1
   g <- s * (args$g2 - args$g1) + args$g1
   gamgam <- 1 / (g * h^2) + 1 / g - 2
-  if (abs(betatilt) < 1e-10) {
+  if (abs(args$betatilt) < 1e-10) {
     bessy <- norm(args$k1) * a / h
   } else {
 #     x <- 2 * norm(args$k1) * a / h * cos(args$betatilt)
@@ -43,7 +32,6 @@ DWBAintegrand.Im <- Vectorize(function(s, args) Im(DWBAintegrand(s, args)),
 
 backscatter.form <- function(x, y, z, a, g, h, k) {
   fbs <- 0 + 0i
-  
   for (j in 1:(length(x) - 1)) {
 #     print(paste("Segment", j))
     r1 <- c(x[j], y[j], z[j])
@@ -71,8 +59,21 @@ f.bs <- with(krill.shape, backscatter.form(x, y, z, a, g, h, k))
 theta <- 0:360
 TS <- rep(0, length(theta))
 for (i in 1:length(theta)) {
-  k <- k.magnitude * c(cos(deg2rad(theta[i])), sin(deg2rad(theta[i])), 0)
+  k <- k.magnitude * c(cos(deg2rad(theta[i])), 0, sin(deg2rad(theta[i])))
   fbs <- with(krill.shape, backscatter.form(x, y, z, a, g, h, k))
   TS[i] <- 10 * log10(abs(fbs)^2)
 }
 plot(theta, TS, ty='l')
+
+
+freqs <- seq(50e3, 500e3, 1e3)
+theta <- 5
+theta <- theta * pi / 180
+TS <- rep(0, length(freqs))
+for (i in 1:length(freqs)) {
+  k <- c(sin(theta), 0, cos(theta)) * freqs[i] * 2 * pi / 1480
+  fbs <- with(krill.shape, backscatter.form(x, y, z, a, g, h, k))
+  TS[i] <- 10 * log10(abs(fbs)^2)
+}
+plot(freqs, TS, ty='l')
+
