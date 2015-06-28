@@ -7,7 +7,6 @@ rad2deg <- function(x) x * 180 / pi
 deg2rad <- function(x) x * pi / 180
 
 
-
 Scatterer <- function(x, y, z, a, density, sound.speed) {
   scatterer <- data.frame(x=x, y=y, z=z, a=a, density=density,
                           sound.speed=sound.speed)
@@ -94,14 +93,15 @@ form.function <- function(scatterer, k, sound.speed, density, phase.sd=0) {
       h <- s * (hh[j + 1] - hh[j]) + hh[j]
       g <- s * (gg[j + 1] - gg[j]) + gg[j]
       gamgam <- 1 / (g * h^2) + 1 / g - 2
+      k2 <- norm(k) / g 
 
       if (abs(betatilt) < 1e-10) {
-        bessy <- norm(k) * a / h
+        bessy <- k2 * a / h
       } else {
-        arg <- 2 * norm(k) * a / h * cos(betatilt)
+        arg <- 2 * k2 * a / h * cos(betatilt)
         bessy <- besselJ(arg, 1) / cos(betatilt)
       }
-      result <- norm(k) / 4 * gamgam * exp(2i * dot(k, r) / h) * a * 
+      result <- norm(k) / 4 * gamgam * a * exp(2i * dot(k, r) / h) * 
         bessy * norm(r2 - r1)
       if (real) {
         return(Re(result))
@@ -147,15 +147,19 @@ form.function.continuous <- function(scatterer, k, sound.speed, density,
     loc_tan <- local_tangent(s)
     beta <- acos(dot(k, loc_tan) / (vecnorm(k) * vecnorm(loc_tan)))
     beta <- abs(beta - pi/2)
-    (g_fun(s) - h_fun(s)) * exp(2i * dot(k, r_fun(s))) * 
-      besselJ(2 * vecnorm(k) * a_fun(s) * cos(beta), 1) / cos(beta)
+    gamgam <- 1 / (g_fun(s) * h_fun(s)^2) + 1 / g_fun(s) - 2
+    k2 <- norm(k) / g_fun(s)
+    a <- a_fun(s)
+    
+    return(norm(k) / 4 * gamgam * exp(2i * dot(k, r_fun(s))) * 
+      a * besselJ(2 * k2 * a * cos(beta), 1) / cos(beta))
   }
   integrand.real <- Vectorize(function(s, k) Re(integrand(s, k)), vectorize.args=c("s"))
   integrand.imag <- Vectorize(function(s, k) Im(integrand(s, k)), vectorize.args=c("s"))
   
   f.bs.real <- integrate(integrand.real, 0, max(ss), k=k)$value
   f.bs.imag <- integrate(integrand.imag, 0, max(ss), k=k)$value
-  f.bs <- (f.bs.real + f.bs.imag) * exp(1i * rnorm(1, 0, phase.sd))
+  f.bs <- (f.bs.real + f.bs.imag) #* exp(1i * rnorm(1, 0, phase.sd))
   return(f.bs)
 }
 
