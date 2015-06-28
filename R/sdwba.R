@@ -7,45 +7,15 @@ rad2deg <- function(x) x * 180 / pi
 deg2rad <- function(x) x * pi / 180
 
 
-Scatterer <- function(x, y, z, a, density, sound.speed) {
-  scatterer <- data.frame(x=x, y=y, z=z, a=a, density=density,
-                          sound.speed=sound.speed)
+Scatterer <- function(x, y, z, a, g, h) {
+  scatterer <- data.frame(x=x, y=y, z=z, a=a, g=g, h=h)
   class(scatterer) <- append(class(scatterer), "Scatterer")
   return(scatterer)
 }
 
-add.density <- function(df, density.water) {
-  if (! "h" %in% names(df)) {
-    stop("Need a column named 'h' of density contrasts to calculate densities in animal")
-  }
-  if (is.null(density.water)) {
-    stop("No value for density.water provided")
-  }
-  df$density <- df$h * density.water
-  return(df)
-}
-
-add.sound.speed <- function(df, sound.speed.water) {
-  if (! "g" %in% names(df)) {
-    stop("Need a column named 'g' of sound speed contrasts to calculate sound speeds in animal")
-  }
-  if (is.null(sound.speed.water)) {
-    stop("No value for sound.speed.water provided")
-  }
-  df$sound.speed <- df$g * sound.speed.water
-  return(df)
-}
-
-load.scatterer <- function(filename, sound.speed.water=NULL,
-                           density.water=NULL, ...) {
+load.scatterer <- function(filename, ...) {
   df <- read.csv(filename, ...)
-  if (! "density" %in% names(df)) {
-    df <- add.density(df, density.water)
-  }
-  if (! "sound.speed" %in% names(df)) {
-    df <- add.sound.speed(df, sound.speed.water)
-  }
-  return(Scatterer(x=df$x, y=df$y, z=df$z, a=df$a, density=df$density, sound.speed=df$sound.speed))
+  return(Scatterer(x=df$x, y=df$y, z=df$z, a=df$a, g=df$g, h=df$h))
 }
 
 save.scatterer <- function(scatterer, ...)  UseMethod("save.scatterer", scatterer)
@@ -75,8 +45,6 @@ rotate.Scatterer <- function(scatterer, roll=0, tilt=0, yaw=0) {
 form.function <- function(scatterer, k, sound.speed, density, phase.sd=0) {
   n <- nrow(scatterer)
   f.bs <- 0 + 0i
-  gg <- scatterer$sound.speed / sound.speed
-  hh <- scatterer$density / density
   for (j in 1:(n - 1)) {
     r1 <- c(scatterer$x[j], scatterer$y[j], scatterer$z[j])
     r2 <- c(scatterer$x[j + 1], scatterer$y[j + 1], scatterer$z[j + 1])
@@ -90,8 +58,8 @@ form.function <- function(scatterer, k, sound.speed, density, phase.sd=0) {
       rz <- s * (r2[3] - r1[3]) + r1[3]
       r <- c(rx, ry, rz)
       a <- s * (scatterer$a[j + 1] - scatterer$a[j]) + scatterer$a[j]
-      h <- s * (hh[j + 1] - hh[j]) + hh[j]
-      g <- s * (gg[j + 1] - gg[j]) + gg[j]
+      h <- s * (scatterer$h[j + 1] - scatterer$h[j]) + scatterer$h[j]
+      g <- s * (scatterer$g[j + 1] - scatterer$g[j]) + scatterer$g[j]
       gamgam <- 1 / (g * h^2) + 1 / g - 2
       k2 <- norm(k) / g 
 
@@ -127,16 +95,14 @@ form.function.continuous <- function(scatterer, k, sound.speed, density,
   dy <- diff(scatterer$y)
   dz <- diff(scatterer$z)
   ss <- c(0, cumsum(sqrt(dx^2 + dy^2 + dz^2)))
-  g <- scatterer$sound.speed / sound.speed
-  h <- scatterer$density / density
   
   # Defining continuous interpolation functions
   x_fun <- splinefun(ss, scatterer$x)
   y_fun <- splinefun(ss, scatterer$y)
   z_fun <- splinefun(ss, scatterer$z)
   a_fun <- splinefun(ss, scatterer$a)
-  g_fun <- splinefun(ss, g)
-  h_fun <- splinefun(ss, h)
+  g_fun <- splinefun(ss, scatterer$g)
+  h_fun <- splinefun(ss, scatterer$h)
   r_fun <- function(s) c(x_fun(s), y_fun(s), z_fun(s))
   local_tangent <- function(s) jacobian(r_fun, s)
   dot <- function(x, y) sum(x * y)

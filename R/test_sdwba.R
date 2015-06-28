@@ -3,7 +3,7 @@ source("sdwba.R")
 sound.speed.water <- 1480
 density.water <- 1027
 
-krill <- load.scatterer("data/generic_krill_Conti2006.csv", sound.speed.water, density.water)
+krill <- load.scatterer("../data/generic_krill_Conti2006.csv")
 krill <- krill[order(krill$x), ]
 # convert form meters to mm
 krill[c("x", "y", "z", "a")] <- krill[c("x", "y", "z", "a")] * 1e-3
