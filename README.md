@@ -8,8 +8,8 @@ We aim to provide functions which calculate the backscattering cross-section (or
 
 This repository does not contain the actual code and implementations, just a description and sample datasets. The actual algoriths are available at the following locations:
 
-* R: https://github.com/ElOceanografo/SDWBA.R
-* Python: https://github.com/ElOceanografo/SDWBA.py
+* R (not fully tested): https://github.com/ElOceanografo/SDWBA.R
+* Python (unfinished): https://github.com/ElOceanografo/SDWBA.py
 
 ### Data ###
 
