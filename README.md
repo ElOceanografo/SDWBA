@@ -6,7 +6,7 @@ Methods, parameters, and modifications for these calculations have been previous
 
 We aim to provide functions which calculate the backscattering cross-section (or target strength) of a fluid-like scatterer with arbitrary shape, material properties, and orientation.  These will be made available in several popular languages for technical computing, including at least R, Matlab, and Python, with tests to ensure identical results in each.  We will also include functions for resizing animals and resampling their shapes to use an adequate number of scattering elements. The code will be clearly implemented, organized, and well-documented, and referenced to the original papers.
 
-This repository does not contain the actual code and implementations, just a description and sample datasets. The actual algoriths are available at the following locations:
+This repository does not contain the actual code and implementations, just a description and sample datasets. The actual algorithms are available at the following locations:
 
 * R (not fully tested): https://github.com/ElOceanografo/SDWBA.R
 * Python (unfinished): https://github.com/ElOceanografo/SDWBA.py
